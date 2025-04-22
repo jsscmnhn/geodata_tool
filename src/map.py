@@ -7,7 +7,7 @@ from streamlit_folium import st_folium
 from folium.plugins import Draw
 import json
 import requests
-from geodata_retrieval import get_layers, fetch_geodata
+from geodata_retrieval import get_capabilities_layers, fetch_geodata
 import sys
 import csv
 
@@ -23,17 +23,7 @@ with open(r"D:\PROJECTS\geodata_tool\data\datasets.json") as f:
     datasets = json.load(f)["datasets"]
 
 
-def fetch_geodata_proxy(bbox, crs):
-    data = {
-        'geometry': [box(bbox[0], bbox[1], bbox[2], bbox[3])],
-        'name': ['Example Polygon']
-    }
-    gdf = gpd.GeoDataFrame(data, crs="EPSG:4326")
-
-    gdf = gdf.to_crs(crs)
-    return gdf
-
-
+# ============ Streamlit folium website parts ==========
 st.title('Geodata Downloader')
 
 crs_code = st.text_input('Enter output CRS (EPSG code):', 'EPSG:28992')
@@ -53,18 +43,17 @@ selected_datasets = st.multiselect(
 dataset_layers = {}
 
 for dataset in datasets:
-    dataset_layers[dataset["name"]] = get_layers(dataset["url"], dataset["type"])
+    dataset_layers[dataset["name"]] = get_capabilities_layers(dataset["url"], dataset["type"])
 
 bbox = None
 
 radius = st.number_input('Enter radius (in meters) for the point:', min_value=0, value=1500)
 
-
 if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
     # Get the last drawn object (NOTE: ONLY THE LAST DRAWN BBOX WILL THEREFORE BE USED)
     drawn_geometry = map_data['all_drawings'][-1]['geometry']
 
-    # Check if the geometry is a polygon
+    # Check if the geometry is a polygon for bounding box
     if drawn_geometry['type'] == 'Polygon':
         drawn_geo = shape(drawn_geometry)
 
@@ -73,7 +62,7 @@ if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
 
         bbox = [minx, miny, maxx, maxy]
 
-
+    # Else if geometry is a point use the radius
     elif drawn_geometry['type'] == 'Point':
 
         drawn_geo = shape(drawn_geometry)
@@ -82,7 +71,7 @@ if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
 
             # Convert point to a bounding box using the radius
             # Convert the radius to degrees (approximate, since we're working with lat/lon)
-            radius_in_degrees = radius / 111320  # Roughly 1 degree = 111.32 km
+            radius_in_degrees = radius / 111320
             minx = drawn_geo.x - radius_in_degrees
             miny = drawn_geo.y - radius_in_degrees
             maxx = drawn_geo.x + radius_in_degrees
@@ -92,7 +81,6 @@ if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
             bbox = [minx, miny, maxx, maxy]
         else:
             st.error("The drawn geometry is not a Point.")
-
 
     try:
         crs = pyproj.CRS.from_string(crs_code)
@@ -116,6 +104,7 @@ with c2:
         if st.button("Fetch Data"):
             results = fetch_geodata(selected_datasets, dataset_layers, datasets, bbox)
 
+            # Download the selected WFS data
             for layer, data in results.items():
                 if data["type"] == "WFS":
                     st.download_button(

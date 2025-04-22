@@ -20,7 +20,23 @@ def transform_bbox(bbox, from_epsg, to_epsg):
     transformed = transform(project, box(minx, miny, maxx, maxy))
     return transformed.bounds
 
-def get_layers(service_url, service_type):
+def get_capabilities_layers(service_url, service_type):
+    """
+     Fetches and parses the available layers from a WMS or WFS service by querying
+     its GetCapabilities endpoint.
+
+     Parameters:
+         service_url (str): The URL of the WMS or WFS service.
+         service_type (str): The type of service ("WMS" or "WFS").
+
+     Returns:
+         list: A list of layer names (for WMS) or feature type names (for WFS)
+               available in the service, or an empty list if the request fails or no layers are found.
+
+     Raises:
+         requests.exceptions.RequestException: If the request to the service fails.
+         xml.etree.ElementTree.ParseError: If the response is not valid XML.
+     """
     capabilities_url = f"{service_url}?request=GetCapabilities&service={service_type}"
 
     print(f"Fetching: {capabilities_url}")
@@ -37,18 +53,15 @@ def get_layers(service_url, service_type):
         layers = []
 
         if service_type.upper() == "WMS":
-            # Try parsing without namespace first
             for layer in root.findall(".//Layer/Name"):
                 layers.append(layer.text)
 
             if not layers:
-                # Use namespace if required (for WMS 1.3.0)
                 namespace = {"wms": "http://www.opengis.net/wms/1.3.0"}
                 for layer in root.findall(".//wms:Layer/wms:Name", namespaces=namespace):
                     layers.append(layer.text)
 
         elif service_type.upper() == "WFS":
-            # Try parsing without namespace first
             for feature in root.findall(".//FeatureType/Name"):
                 layers.append(feature.text)
 
@@ -69,6 +82,20 @@ def get_layers(service_url, service_type):
 
 
 def get_supported_crs(wfs_url):
+    """
+    Retrieves the set of supported CRS (Coordinate Reference Systems) from a WFS service
+    by parsing its GetCapabilities response.
+
+    Parameters:
+        wfs_url (str): The base URL of the WFS service.
+
+    Returns:
+        set: A set of CRS URNs (e.g., "urn:ogc:def:crs:EPSG::4326") supported by the service,
+             or an empty set if the request fails or no CRS entries are found.
+
+    Raises:
+        Exception: If there is a network or parsing error (caught and logged).
+    """
     params = {
         "service": "WFS",
         "version": "2.0.0",
@@ -95,6 +122,30 @@ def get_supported_crs(wfs_url):
 
 
 def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox):
+    """
+     Fetches geospatial data for selected datasets and layers from WFS or WMS services
+     within a given bounding box.
+
+     For WFS layers, it downloads features in GeoJSON format (handling pagination),
+     reprojects to EPSG:4326 if necessary, and saves the result to disk.
+     For WMS layers, it constructs a GetMap URL for the bounding box.
+
+     Parameters:
+         selected_datasets (list of str): Names of datasets selected by the user.
+         dataset_layers (dict): Mapping from dataset name to a list of layer names.
+         datasets (list of dict): Each dict should contain keys 'name', 'url', and 'type' ('WFS' or 'WMS').
+         bbox (tuple): Bounding box as (minx, miny, maxx, maxy) in EPSG:4326.
+
+     Returns:
+         dict: A dictionary where keys are layer names and values contain:
+               - type: 'WFS' or 'WMS'
+               - geojson and filename for WFS layers
+               - URL for WMS layers
+
+     Raises:
+         requests.exceptions.RequestException: If any service request fails (caught and logged).
+     """
+    
     minx, miny, maxx, maxy = bbox
     results = {}
 
