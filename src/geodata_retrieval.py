@@ -145,7 +145,7 @@ def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox):
      Raises:
          requests.exceptions.RequestException: If any service request fails (caught and logged).
      """
-    
+
     minx, miny, maxx, maxy = bbox
     results = {}
 
