@@ -1,0 +1,16 @@
+{
+  "datasets": [
+    {
+      "name": "BAG buildings (WFS)",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/lv/bag/wfs/v2_0",
+      "layer": "top10nl:building"
+    },
+    {
+      "name": "Aerial Imagery (WMS)",
+      "type": "WMS",
+      "url": "https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0",
+      "layer": "luchtfoto"
+    }
+  ]
+}
