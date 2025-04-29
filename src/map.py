@@ -40,10 +40,14 @@ selected_datasets = st.multiselect(
     options=[ds["name"] for ds in datasets]
 )
 
-dataset_layers = {}
+@st.cache_data
+def get_all_dataset_layers(datasets):
+    return {
+        dataset["name"]: get_capabilities_layers(dataset["url"], dataset["type"])
+        for dataset in datasets
+    }
 
-for dataset in datasets:
-    dataset_layers[dataset["name"]] = get_capabilities_layers(dataset["url"], dataset["type"])
+dataset_layers = get_all_dataset_layers(datasets)
 
 bbox = None
 
@@ -70,7 +74,7 @@ if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
             st.write(f"Point Coordinates: {drawn_geo.x}, {drawn_geo.y}")
 
             # Convert point to a bounding box using the radius
-            # Convert the radius to degrees (approximate, since we're working with lat/lon)
+            # Convert the radius to degrees (approximate, lat/lon)
             radius_in_degrees = radius / 111320
             minx = drawn_geo.x - radius_in_degrees
             miny = drawn_geo.y - radius_in_degrees

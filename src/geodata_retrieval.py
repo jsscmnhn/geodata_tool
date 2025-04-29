@@ -8,6 +8,12 @@ import pyproj
 from shapely.geometry import box
 from shapely.ops import transform
 from functools import partial
+import os
+
+# CHOOSE PLACE TO DOWNLOAD TO
+output_dir = r"D:\PROJECTS\geodata_tool\downloads"
+os.makedirs(output_dir, exist_ok=True)
+
 
 def transform_bbox(bbox, from_epsg, to_epsg):
     """Transform a bbox from one CRS to another."""
@@ -165,7 +171,7 @@ def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox):
                 if dataset["type"] == "WFS":
                     all_features = []
                     start_index = 0
-                    count = 1000
+                    count = 1000  # limit of dutch requests
 
                     while True:
                         params = {
@@ -213,8 +219,12 @@ def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox):
                         full_gdf = full_gdf[full_gdf.geometry.notnull()]
                         full_gdf = full_gdf[full_gdf.is_valid]
 
-                        filename = f"{layer.replace(':', '_')}_4326.geojson"
+                        filename = os.path.join(output_dir, f"{layer.replace(':', '_')}_4326.geojson")
                         full_gdf.to_file(filename, driver='GeoJSON')
+
+                        for col in full_gdf.columns:
+                            if pd.api.types.is_datetime64_any_dtype(full_gdf[col]):
+                                full_gdf[col] = full_gdf[col].astype(str)
 
                         geojson = full_gdf.to_json()
                         results[layer] = {

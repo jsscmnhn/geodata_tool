@@ -3,14 +3,32 @@
     {
       "name": "BAG buildings (WFS)",
       "type": "WFS",
-      "url": "https://service.pdok.nl/lv/bag/wfs/v2_0",
-      "layer": "top10nl:building"
+      "url": "https://service.pdok.nl/lv/bag/wfs/v2_0"
+    },
+    {
+      "name": "Bodemgebruik - Land Cover (WFS)",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/kadaster/lc/wfs/v1_0"
+    },
+    {
+      "name": "Administratieve Eenheden (WFS)",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/kadaster/au/wfs/v2_0"
+    },
+    {
+      "name": "Agglomeraties - Richtlijn omgevingslawaai",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
+    },
+    {
+      "name": "Agglomeraties - Richtlijn omgevingslawaai",
+      "type": "WCS",
+      "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
     },
     {
       "name": "Aerial Imagery (WMS)",
       "type": "WMS",
-      "url": "https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0",
-      "layer": "luchtfoto"
+      "url": "https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0"
     }
   ]
 }
