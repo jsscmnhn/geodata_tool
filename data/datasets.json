@@ -22,13 +22,15 @@
     },
     {
       "name": "Agglomeraties - Richtlijn omgevingslawaai",
-      "type": "WCS",
+      "type": "WFS",
       "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
     },
     {
-      "name": "Aerial Imagery (WMS)",
-      "type": "WMS",
-      "url": "https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0"
+      "name": "BRO Bodemkundig Booronderzoek (WMSg)",
+      "type": "WMS_geojson",
+      "url": "https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0",
+      "query_layer": "bhr_kenset",
+      "layer": "bhr_kenset"
     }
   ]
 }
