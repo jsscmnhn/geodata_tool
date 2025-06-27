@@ -53,6 +53,10 @@ bbox = None
 
 radius = st.number_input('Enter radius (in meters) for the point:', min_value=0, value=1500)
 
+# toggles for WCS
+sample_raster_centers = st.toggle("Sample Raster Center Values", value=False)
+save_geotiff_output = st.toggle("Save GeoTIFF", value=False)
+
 if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
     # Get the last drawn object (NOTE: ONLY THE LAST DRAWN BBOX WILL THEREFORE BE USED)
     drawn_geometry = map_data['all_drawings'][-1]['geometry']
@@ -106,7 +110,8 @@ with c1:
 with c2:
     if bbox and selected_datasets:
         if st.button("Fetch Data"):
-            results = fetch_geodata(selected_datasets, dataset_layers, datasets, bbox)
+            results = fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_values=False, save_geotiff=False)
+
 
             # Download the selected WFS data
             for layer, data in results.items():
@@ -117,3 +122,22 @@ with c2:
                         file_name=data["filename"],
                         mime="application/geo+json"
                     )
+
+                if data["type"] == "WCS":
+                    if sample_raster_centers and "sampled_gdf" in data:
+                        geojson = data["sampled_gdf"].to_json()
+                        st.download_button(
+                            label=f"Download {layer} Sampled Points (GeoJSON)",
+                            data=geojson,
+                            file_name=f"{layer}_sampled_points.geojson",
+                            mime="application/geo+json"
+                        )
+
+                    if save_geotiff_output and "geotiff_path" in data:
+                        with open(data["geotiff_path"], "rb") as f:
+                            st.download_button(
+                                label=f"Download {layer} GeoTIFF",
+                                data=f,
+                                file_name=data["geotiff_path"].split("/")[-1],
+                                mime="image/tiff"
+                            )

@@ -10,6 +10,13 @@ from shapely.ops import transform
 from functools import partial
 import os
 
+import rasterio
+from rasterio.io import MemoryFile
+from affine import Affine
+import numpy as np
+import geopandas as gpd
+from shapely.geometry import Point
+
 # CHOOSE PLACE TO DOWNLOAD TO
 output_dir = r"D:\PROJECTS\geodata_tool\downloads"
 os.makedirs(output_dir, exist_ok=True)
@@ -127,7 +134,94 @@ def get_supported_crs(wfs_url):
         return set()
 
 
-def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox):
+
+def sample_wcs_raster_to_points(bbox, width=100, height=100, crs='EPSG:28992',
+                                 save_geotiff=False, save_geojson=True,
+                                 geotiff_path='coverage.tif', geojson_path='coverage.geojson',
+                                 coverage_id='dsm_05m'):
+    '''
+    Samples a WCS raster coverage and extracts point data with corresponding values.
+
+    Parameters:
+        bbox (tuple): Bounding box as (minx, miny, maxx, maxy) in the specified CRS.
+        width (int): Width (in pixels) of the requested raster.
+        height (int): Height (in pixels) of the requested raster.
+        crs (str): CRS of the bounding box and result (e.g., 'EPSG:28992').
+        save_geotiff (bool): Whether to save the downloaded GeoTIFF to disk.
+        save_geojson (bool): Whether to save the extracted point data as GeoJSON.
+        geotiff_path (str): File path for saving the GeoTIFF (if enabled).
+        geojson_path (str): File path for saving the GeoJSON (if enabled).
+        coverage_id (str): ID of the WCS coverage (e.g., 'dsm_05m', 'dtm_05m').
+
+    Returns:
+        GeoDataFrame: A GeoDataFrame with geometry (Point) and a single 'value' column.
+    '''
+    base_url = "https://service.pdok.nl/rws/ahn/wcs/v1_0"
+
+    params = {
+        "service": "WCS",
+        "request": "GetCapabilities"
+    }
+
+    response = requests.get(base_url, params=params)
+
+    print(response.status_code)
+    print(response.text[:1000])
+
+    wcs_url = (
+        f"{base_url}?service=WCS&version=1.0.0&request=GetCoverage"
+        f"&coverage={coverage_id}"
+        f"&bbox={','.join(map(str, bbox))}"
+        f"&CRS={crs}"
+        f"&width={width}&height={height}"
+        f"&format=GeoTIFF"
+    )
+
+    response = requests.get(wcs_url)
+    print(response.status_code)
+    print(response.text[:1000])
+    response.raise_for_status()
+
+    try:
+        with MemoryFile(response.content) as memfile:
+            with memfile.open() as src:
+                transform = src.transform
+                raster_data = src.read(1)
+
+                rows, cols = src.height, src.width
+                points = []
+                values = []
+
+                for row in range(rows):
+                    for col in range(cols):
+                        x, y = transform * (col + 0.5, row + 0.5)
+                        value = raster_data[row, col]
+                        points.append(Point(x, y))
+                        values.append(value)
+
+                gdf = gpd.GeoDataFrame({'value': values}, geometry=points, crs=crs)
+
+                if save_geotiff:
+                    with open(geotiff_path, "wb") as f:
+                        f.write(response.content)
+                    print(f"GeoTIFF saved to {geotiff_path}")
+
+                if save_geojson:
+                    gdf = gdf.to_crs('EPSG:4326')
+                    gdf.to_file(geojson_path, driver="GeoJSON")
+                    print(f"GeoJSON saved to {geojson_path}")
+
+                return gdf
+
+    except rasterio.errors.RasterioIOError:
+        print("The response was not a valid GeoTIFF. It may contain an error message.")
+        with open("debug_response.tiff", "wb") as f:
+            f.write(response.content)
+        return None
+
+
+
+def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_values=False, save_geotiff=False):
     """
      Fetches geospatial data for selected datasets and layers from WFS or WMS services
      within a given bounding box.
@@ -235,15 +329,44 @@ def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox):
 
                         print(f"Saved {layer} to {filename}")
 
-                elif dataset["type"] == "WMS":
-                    wms_url = (
-                        f"{dataset['url']}?service=WMS&request=GetMap"
-                        f"&layers={layer}&bbox={minx},{miny},{maxx},{maxy}"
-                        f"&width=500&height=500&srs=EPSG:4326&format=image/png"
-                    )
-                    results[layer] = {
-                        "type": "WMS",
-                        "url": wms_url
-                    }
+                elif dataset["type"] == "WCS":
 
+                    geojson_path = os.path.join(output_dir, f"{layer}_points.geojson")
+
+                    geotiff_path = os.path.join(output_dir, f"{layer}.tif")
+
+                    try:
+
+                        gdf = sample_wcs_raster_to_points(
+
+                            bbox=(minx, miny, maxx, maxy),
+
+                            crs=f"EPSG:{to_epsg}",
+
+                            save_geotiff=True,
+
+                            save_geojson=True,
+                            geotiff_path=geotiff_path,
+
+                            geojson_path=geojson_path
+
+                        )
+
+                        if gdf is not None:
+                            results[layer] = {
+
+                                "type": "WCS",
+
+                                "geojson": gdf.to_json(),
+
+                                "filename": geojson_path,
+
+                                "geotiff": geotiff_path
+
+                            }
+
+
+                    except Exception as e:
+
+                        print(f"Failed to fetch WCS layer {layer}: {e}")
     return results
