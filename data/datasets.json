@@ -16,21 +16,37 @@
       "url": "https://service.pdok.nl/kadaster/au/wfs/v2_0"
     },
     {
-      "name": "Agglomeraties - Richtlijn omgevingslawaai",
+      "name": "Agglomeraties - Richtlijn omgevingslawaai (WFS)",
       "type": "WFS",
       "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
     },
     {
-      "name": "Agglomeraties - Richtlijn omgevingslawaai",
+      "name": "Agglomeraties - Richtlijn omgevingslawaai (WFS)",
       "type": "WFS",
       "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
     },
 
     {
-      "name": "AHN ",
+      "name": "Landelijk Grondgebruik Nederland (LGN) (WMS)",
+      "type": "WMS",
+      "url": "https://service.pdok.nl/wur/lgn/wms/v1_0"
+    },
+
+    {
+      "name": "Luchtfoto RGB (WMS)",
+      "type": "WMS",
+      "url": " https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0"
+    },
+
+
+
+    {
+      "name": "AHN (WCS)",
       "type": "WCS",
       "url": "https://service.pdok.nl/rws/ahn/wcs/v1_0"
 
     }
   ]
 }
+
+

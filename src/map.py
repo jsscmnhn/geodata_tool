@@ -7,9 +7,10 @@ from streamlit_folium import st_folium
 from folium.plugins import Draw
 import json
 import requests
-from geodata_retrieval import get_capabilities_layers, fetch_geodata
+from geodata_retrieval import get_capabilities_layers, fetch_geodata, get_wcs_coverages
 import sys
 import csv
+import os
 
 # ensure max table size for windows is not reached
 if sys.platform != "win32":
@@ -42,10 +43,14 @@ selected_datasets = st.multiselect(
 
 @st.cache_data
 def get_all_dataset_layers(datasets):
-    return {
-        dataset["name"]: get_capabilities_layers(dataset["url"], dataset["type"])
-        for dataset in datasets
-    }
+    all_layers = {}
+    for dataset in datasets:
+        if dataset["type"].upper() == "WCS":
+            coverages = get_wcs_coverages(dataset["url"])
+            all_layers[dataset["name"]] = coverages
+        else:
+            all_layers[dataset["name"]] = get_capabilities_layers(dataset["url"], dataset["type"])
+    return all_layers
 
 dataset_layers = get_all_dataset_layers(datasets)
 
@@ -54,8 +59,8 @@ bbox = None
 radius = st.number_input('Enter radius (in meters) for the point:', min_value=0, value=1500)
 
 # toggles for WCS
-sample_raster_centers = st.toggle("Sample Raster Center Values", value=False)
-save_geotiff_output = st.toggle("Save GeoTIFF", value=False)
+sample_raster_centers = st.toggle("Sample Raster Center Values", value=True)
+save_geotiff_output = st.toggle("Save GeoTIFF", value=True)
 
 if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
     # Get the last drawn object (NOTE: ONLY THE LAST DRAWN BBOX WILL THEREFORE BE USED)
@@ -110,9 +115,8 @@ with c1:
 with c2:
     if bbox and selected_datasets:
         if st.button("Fetch Data"):
-            results = fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_values=False, save_geotiff=False)
-
-
+            results = fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_values=sample_raster_centers, save_geotiff=save_geotiff_output)
+            print(datasets)
             # Download the selected WFS data
             for layer, data in results.items():
                 if data["type"] == "WFS":
@@ -123,7 +127,7 @@ with c2:
                         mime="application/geo+json"
                     )
 
-                if data["type"] == "WCS":
+                elif data["type"] == "WCS":
                     if sample_raster_centers and "sampled_gdf" in data:
                         geojson = data["sampled_gdf"].to_json()
                         st.download_button(
@@ -141,3 +145,11 @@ with c2:
                                 file_name=data["geotiff_path"].split("/")[-1],
                                 mime="image/tiff"
                             )
+
+                elif data["type"] == "WMS":
+                    st.download_button(
+                        label=f"Download {layer} WMS png",
+                        data=data["data_bytes"],
+                        file_name=f"{layer.replace(':', '_')}_wms.png",
+                        mime="image/png"
+                    )
