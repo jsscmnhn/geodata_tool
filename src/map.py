@@ -1,16 +1,18 @@
 import streamlit as st
-import geopandas as gpd
 import pyproj
 from shapely.geometry import box, shape, Point
 import folium
 from streamlit_folium import st_folium
 from folium.plugins import Draw
 import json
-import requests
 from geodata_retrieval import get_capabilities_layers, fetch_geodata, get_wcs_coverages
 import sys
 import csv
 import os
+
+# OUTPUT FOLDER DOWNLOADS: MAKE RELATIVE TO YOUR COMPUTER
+output_dir = "D:/PROJECTS/geodata_tool/downloads"
+os.makedirs(output_dir, exist_ok=True)
 
 # ensure max table size for windows is not reached
 if sys.platform != "win32":
@@ -115,41 +117,38 @@ with c1:
 with c2:
     if bbox and selected_datasets:
         if st.button("Fetch Data"):
-            results = fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_values=sample_raster_centers, save_geotiff=save_geotiff_output)
+            results = fetch_geodata(
+                selected_datasets,
+                dataset_layers,
+                datasets,
+                bbox,
+                sample_values=sample_raster_centers,
+                save_geotiff=save_geotiff_output
+            )
 
-            # Download the selected WFS data
             for layer, data in results.items():
                 if data["type"] == "WFS":
-                    st.download_button(
-                        label=f"Download {layer} as GeoJSON",
-                        data=data["geojson"],
-                        file_name=data["filename"],
-                        mime="application/geo+json"
-                    )
+                    output_path = os.path.join(output_dir, data["filename"])
+                    with open(output_path, "w", encoding="utf-8") as f:
+                        f.write(data["geojson"])
+                    st.success(f"Saved {layer} as GeoJSON to {output_path}")
 
                 elif data["type"] == "WCS":
                     if sample_raster_centers and "sampled_gdf" in data:
                         geojson = data["sampled_gdf"].to_json()
-                        st.download_button(
-                            label=f"Download {layer} Sampled Points (GeoJSON)",
-                            data=geojson,
-                            file_name=f"{layer}_sampled_points.geojson",
-                            mime="application/geo+json"
-                        )
+                        sampled_path = os.path.join(output_dir, f"{layer}_sampled_points.geojson")
+                        with open(sampled_path, "w", encoding="utf-8") as f:
+                            f.write(geojson)
+                        st.success(f"Saved sampled points for {layer} to {sampled_path}")
 
                     if save_geotiff_output and "geotiff_path" in data:
-                        with open(data["geotiff_path"], "rb") as f:
-                            st.download_button(
-                                label=f"Download {layer} GeoTIFF",
-                                data=f,
-                                file_name=data["geotiff_path"].split("/")[-1],
-                                mime="image/tiff"
-                            )
+                        geotiff_src = data["geotiff_path"]
+                        geotiff_dst = os.path.join(output_dir, os.path.basename(geotiff_src))
+                        os.replace(geotiff_src, geotiff_dst)
+                        st.success(f"Saved GeoTIFF for {layer} to {geotiff_dst}")
 
                 elif data["type"] == "WMS":
-                    st.download_button(
-                        label=f"Download {layer} WMS png",
-                        data=data["data_bytes"],
-                        file_name=f"{layer.replace(':', '_')}_wms.png",
-                        mime="image/png"
-                    )
+                    png_path = os.path.join(output_dir, f"{layer.replace(':', '_')}_wms.png")
+                    with open(png_path, "wb") as f:
+                        f.write(data["data_bytes"])
+                    st.success(f"Saved WMS PNG for {layer} to {png_path}")

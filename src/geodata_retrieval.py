@@ -1,14 +1,12 @@
 import requests
 import gzip
 from io import BytesIO
-import geopandas as gpd
 import pandas as pd
 from pyproj import Transformer
 from shapely.geometry import box
 from shapely.ops import transform
 import os
 import math
-import numpy as np
 from PIL import Image
 
 import rasterio
@@ -19,8 +17,8 @@ from shapely.geometry import Point
 import xml.etree.ElementTree as ET
 
 
-# CHOOSE PLACE TO DOWNLOAD TO
-output_dir = r"D:\PROJECTS\geodata_tool\downloads"
+# CHOOSE PLACE TO DOWNLOAD TO MAKE RELATIVE TO YOUR COMPUTER
+output_dir = "D:/PROJECTS/geodata_tool/downloads"
 os.makedirs(output_dir, exist_ok=True)
 
 
@@ -212,7 +210,7 @@ def get_capabilities_layers(service_url, service_type):
 def sample_wcs_raster_to_points(bbox, coverage_id, width=100, height=100, crs='EPSG:28992', resolution=0.5,
                                sample_values=False,  # default False
                                save_geotiff=False,
-                               geotiff_path='coverage.tif', geojson_path='coverage.geojson',
+                               geotiff_path=f'{output_dir}/coverage.tif', geojson_path=f'{output_dir}/coverage.geojson',
                                ):
     '''
     Samples a WCS raster coverage and extracts point data with corresponding values if sample_values=True.
@@ -515,8 +513,8 @@ def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_valu
                             resolution=0.5,
                             sample_values=True,
                             save_geotiff=True,
-                            geotiff_path=f"{layer}.tif",
-                            geojson_path=f"{layer}.geojson",
+                            geotiff_path=geotiff_path,
+                            geojson_path=geojson_path
 
                         )
 
