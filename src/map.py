@@ -73,7 +73,7 @@ if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
         minx, miny, maxx, maxy = drawn_geo.bounds
         st.write(f"Original Coordinates Bounding Box Coordinates: {minx}, {miny}, {maxx}, {maxy}")
 
-        bbox = [minx, miny, maxx, maxy]
+        bbox = (minx, miny, maxx, maxy)
 
     # Else if geometry is a point use the radius
     elif drawn_geometry['type'] == 'Point':
@@ -91,7 +91,7 @@ if map_data and 'all_drawings' in map_data and map_data['all_drawings']:
             maxy = drawn_geo.y + radius_in_degrees
 
             st.write(f"Generated Bounding Box Coordinates: {minx}, {miny}, {maxx}, {maxy}")
-            bbox = [minx, miny, maxx, maxy]
+            bbox = (minx, miny, maxx, maxy)
         else:
             st.error("The drawn geometry is not a Point.")
 
@@ -116,7 +116,7 @@ with c2:
     if bbox and selected_datasets:
         if st.button("Fetch Data"):
             results = fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_values=sample_raster_centers, save_geotiff=save_geotiff_output)
-            print(datasets)
+
             # Download the selected WFS data
             for layer, data in results.items():
                 if data["type"] == "WFS":

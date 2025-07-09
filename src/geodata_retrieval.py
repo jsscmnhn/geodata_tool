@@ -97,7 +97,7 @@ def get_wcs_coverages(wcs_url):
             cov_id = coverage.find('wcs:name', ns)
             if cov_id is not None and cov_id.text:
                 coverages.append(cov_id.text)
-
+        print('coverages included: ', coverages)
         return coverages
 
     except Exception as e:
@@ -209,16 +209,17 @@ def get_capabilities_layers(service_url, service_type):
 #         return set()
 
 
-def sample_wcs_raster_to_points(bbox, width=100, height=100, crs='EPSG:28992', resolution=0.5,
+def sample_wcs_raster_to_points(bbox, coverage_id, width=100, height=100, crs='EPSG:28992', resolution=0.5,
                                sample_values=False,  # default False
                                save_geotiff=False,
                                geotiff_path='coverage.tif', geojson_path='coverage.geojson',
-                               coverage_id='dsm_05m'):
+                               ):
     '''
     Samples a WCS raster coverage and extracts point data with corresponding values if sample_values=True.
     '''
 
     minx, miny, maxx, maxy = bbox
+    print('bbox in sample: ', bbox)
     bbox_width = maxx - minx
     bbox_height = maxy - miny
 
@@ -257,12 +258,24 @@ def sample_wcs_raster_to_points(bbox, width=100, height=100, crs='EPSG:28992', r
                     points = []
                     values = []
 
+                    nodata = src.nodata
+
                     for row in range(rows):
                         for col in range(cols):
-                            x, y = transform * (col + 0.5, row + 0.5)
                             value = raster_data[row, col]
+                            if nodata is not None and value == nodata:
+                                continue
+                            x, y = transform * (col + 0.5, row + 0.5)
                             points.append(Point(x, y))
                             values.append(value)
+
+                    # THIS CODE IS FOR IF YOU ALSO WANT TO SAVE NO DATA VALUE POINTS
+                    # for row in range(rows):
+                    #     for col in range(cols):
+                    #         x, y = transform * (col + 0.5, row + 0.5)
+                    #         value = raster_data[row, col]
+                    #         points.append(Point(x, y))
+                    #         values.append(value)
 
                     gdf = gpd.GeoDataFrame({'value': values}, geometry=points, crs=crs)
                     gdf = gdf.to_crs('EPSG:4326')
@@ -490,7 +503,33 @@ def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_valu
 
                         print(f"Saved {layer} to {filename}")
 
+            elif dataset["type"] == "WCS":
+                for layer in layers:
+                    geojson_path = os.path.join(output_dir, f"{layer}_points.geojson")
+                    geotiff_path = os.path.join(output_dir, f"{layer}.tif")
 
+                    try:
+                        gdf = sample_wcs_raster_to_points(
+                            bbox=(minx, miny, maxx, maxy),
+                            coverage_id=layer,
+                            resolution=0.5,
+                            sample_values=True,
+                            save_geotiff=True,
+                            geotiff_path=f"{layer}.tif",
+                            geojson_path=f"{layer}.geojson",
+
+                        )
+
+                        if gdf is not None:
+                            results[layer] = {
+                                "type": "WCS",
+                                "geojson": gdf.to_json(),
+                                "filename": geojson_path,
+                                "geotiff": geotiff_path
+                            }
+
+                    except Exception as e:
+                        print(f"Failed to fetch WCS layer {layer}: {e}")
 
             elif dataset["type"] == "WMS":
                 max_pixels = 4000
@@ -653,29 +692,5 @@ def fetch_geodata(selected_datasets, dataset_layers, datasets, bbox, sample_valu
                         print(f"Exception fetching WMS layer {layer}: {e}")
 
 
-            elif dataset["type"] == "WCS":
-                geojson_path = os.path.join(output_dir, f"{layer}_points.geojson")
-                geotiff_path = os.path.join(output_dir, f"{layer}.tif")
 
-                try:
-                    gdf = sample_wcs_raster_to_points(
-                        bbox=(minx, miny, maxx, maxy),
-                        crs=f"EPSG:{to_epsg}",
-                        save_geotiff=save_geotiff,
-                        sample_values=sample_values,
-                        geotiff_path=geotiff_path,
-                        geojson_path=geojson_path
-                    )
-
-                    if gdf is not None:
-                        results[layer] = {
-                            "type": "WCS",
-                            "geojson": gdf.to_json(),
-                            "filename": geojson_path,
-                            "geotiff": geotiff_path
-                        }
-
-
-                except Exception as e:
-                    print(f"Failed to fetch WCS layer {layer}: {e}")
     return results
