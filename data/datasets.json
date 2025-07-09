@@ -1,30 +1,78 @@
 {
   "datasets": [
     {
+      "name": "Administratieve Eenheden (INSPIRE geharmoniseerd) (WFS)",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/kadaster/au/wfs/v2_0"
+    },
+
+    {
+      "name": "Agglomeraties - Richtlijn omgevingslawaai (INSPIRE geharmoniseerd)(WFS)",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
+    },
+
+    {
+      "name": "Basisregistratie Gewaspercelen (BRP) (WFS)",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/rvo/brpgewaspercelen/wfs/v1_0"
+    },
+
+    {
       "name": "BAG buildings (WFS)",
       "type": "WFS",
       "url": "https://service.pdok.nl/lv/bag/wfs/v2_0"
     },
+
     {
       "name": "Bodemgebruik - Land Cover (WFS)",
       "type": "WFS",
       "url": "https://service.pdok.nl/kadaster/lc/wfs/v1_0"
     },
+
     {
       "name": "Administratieve Eenheden (WFS)",
       "type": "WFS",
       "url": "https://service.pdok.nl/kadaster/au/wfs/v2_0"
     },
+
     {
-      "name": "Agglomeraties - Richtlijn omgevingslawaai (WFS)",
-      "type": "WFS",
-      "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
+      "name": "Aardkundige waarden (WMS)",
+      "type": "WMS",
+      "url": "https://service.pdok.nl/provincies/aardkundige-waarden/wms/v1_0"
     },
+
     {
-      "name": "Agglomeraties - Richtlijn omgevingslawaai (WFS)",
+      "name": "Beschermde Gebieden - Cultuurhistorie (WFS)",
       "type": "WFS",
-      "url": "https://service.pdok.nl/ienw/gebiedsbeheer/agglomeraties-richtlijn-omgevingslawaai/wfs/v1_0"
+      "url": "https://service.pdok.nl/rce/ps-ch/wfs/v1_0"
     },
+
+    {
+      "name": "Bestuurlijke Gebieden (WFS)",
+      "type": "WFS",
+      "url": "https://service.pdok.nl/kadaster/bestuurlijkegebieden/wfs/v1_0"
+    },
+
+    {
+      "name": "Bodemgebruik - Land Cover (WFS)",
+      "type": "https://service.pdok.nl/kadaster/lc/wfs/v1_0",
+      "url": "https://service.pdok.nl/kadaster/lc/wfs/v1_0"
+    },
+
+    {
+      "name": "NAAM (WFS)",
+      "type": "WFS",
+      "url": "https"
+    },
+
+
+    {
+      "name": "Begrenzingen van vergunde ontgrondingsgebieden voor zand- en grindwinning (WMS)",
+      "type": "WMS",
+      "url": "https://service.pdok.nl/provincies/begrenzingen-vergunde-ontgrondingsgebieden-zand-grindwinning/wms/v1_0"
+    },
+
 
     {
       "name": "Landelijk Grondgebruik Nederland (LGN) (WMS)",
@@ -35,9 +83,26 @@
     {
       "name": "Luchtfoto RGB (WMS)",
       "type": "WMS",
-      "url": " https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0"
+      "url": "https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0"
     },
 
+    {
+      "name": "BRO Bodemkaart (SGM)(WMS)",
+      "type": "WMS",
+      "url": "https://service.pdok.nl/bzk/bro-bodemkaart/wms/v1_0"
+    },
+
+    {
+      "name": "BRO Bodemkundig Booronderzoek (BHR-P)",
+      "type": "WMS",
+      "url": "https://service.pdok.nl/bzk/brobhrpkenset/wms/v1_0"
+    },
+
+    {
+      "name": "BRO Geomorfologische kaart (GMM)",
+      "type": "WMS",
+      "url": "https://service.pdok.nl/bzk/bro-geomorfologischekaart/wms/v2_0"
+    },
 
     {
       "name": "AHN (WCS)",
